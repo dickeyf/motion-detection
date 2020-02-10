@@ -1,16 +1,20 @@
+# Motion detection from https://software.intel.com/en-us/node/754940
+
 import numpy as np
 import cv2
 import json
 import base64
 import os
+import time
 import paho.mqtt.client as mqtt
-import datetime as dt
 
 last_2_pictures = []
 sdThresh = 3
 motion_debounce_seconds = 2
-motion_detected_from = -1
+motion_detected_begin = -1
 last_motion_detected = -1
+motion_timestamp_begin = ""
+motion_timestamp_end = ""
 
 def insert_picture(picture):
     last_2_pictures.append(picture)
@@ -43,6 +47,10 @@ def get_opencv_img_from_buffer(buffer, flags):
 
 # The callback for when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):
+    global motion_detected_begin
+    global last_motion_detected
+    global motion_timestamp_begin
+    global motion_timestamp_end
     json_payload = msg.payload
     payload = json.loads(json_payload)
     jpeg = base64.b64decode(payload["picture"])
@@ -61,17 +69,24 @@ def on_message(client, userdata, msg):
         _, thresh = cv2.threshold(mod, 100, 255, 0)
         # calculate st dev test
         _, stDev = cv2.meanStdDev(mod)
+        current_time = time.monotonic_ns()
         if stDev > sdThresh:
-            current_time = dt.datetime.now().microsecond
-            if motion_detected_from == -1:
-                motion_detected_from = current_time
-
-            motion = {
-                "timestamp": payload["timestamp"],
-                "stdDev": str(stDev)
-            }
-            client.publish("dickeycloud/birdhouse/motion/v1/1", json.dumps(motion))
+            if motion_detected_begin == -1:
+                motion_detected_begin = current_time
+                motion_timestamp_begin = payload["timestamp"]
+            last_motion_detected = current_time
+            motion_timestamp_end = payload["timestamp"]
             print("Motion detected! Timestamp: " + payload["timestamp"])
+        if motion_detected_begin != -1:
+            if current_time > last_motion_detected + (motion_debounce_seconds*1000000000):
+                print("Motion detected from ", motion_detected_begin, " to ", last_motion_detected)
+                motion = {
+                    "begin_timestamp": motion_timestamp_begin,
+                    "end_timestamp": motion_timestamp_end
+                }
+                client.publish("dickeycloud/birdhouse/motion/v1/1", json.dumps(motion))
+                motion_detected_begin = -1
+
 
 vmr_host = os.environ["VMR_HOST"]
 mqtt_port = os.environ["MQTT_PORT"]

@@ -2,3 +2,4 @@ venv/
 lib/
 bin/
 *.jpeg
+.idea/
