@@ -3,3 +3,4 @@ lib/
 bin/
 *.jpeg
 .idea/
+.DS_Store
