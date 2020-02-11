@@ -4,3 +4,4 @@ bin/
 *.jpeg
 .idea/
 .DS_Store
+k8s/motion-detect.yml
