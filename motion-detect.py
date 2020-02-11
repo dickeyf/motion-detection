@@ -88,11 +88,13 @@ def on_message(client, userdata, msg):
                 motion_detected_begin = -1
 
 
+# Collect the Solace PubSub+ connection parameters from the ENV vars
 vmr_host = os.environ["VMR_HOST"]
 mqtt_port = os.environ["MQTT_PORT"]
 mqtt_username = os.environ["MQTT_USERNAME"]
 mqtt_password = os.environ["MQTT_PASSWORD"]
 
+# Establish connection with the Solace PubSub+ broker
 client = mqtt.Client()
 client.on_connect = on_connect
 client.on_message = on_message
