@@ -16,6 +16,7 @@ last_motion_detected = -1
 motion_timestamp_begin = ""
 motion_timestamp_end = ""
 
+
 def insert_picture(picture):
     last_2_pictures.append(picture)
     # Don't keep more than 2 pictures in memory
@@ -29,7 +30,7 @@ def on_connect(client, userdata, flags, rc):
 
     # Subscribing in on_connect() means that if we lose the connection and
     # reconnect then subscriptions will be renewed.
-    client.subscribe("dickeycloud/birdhouse/previews/v1/1")
+    client.subscribe("lego/robot/hamster/events/video")
 
 
 def distMap(frame1, frame2):
@@ -41,9 +42,11 @@ def distMap(frame1, frame2):
     dist = np.uint8(norm32 * 255)
     return dist
 
+
 def get_opencv_img_from_buffer(buffer, flags):
     bytes_as_np_array = np.frombuffer(buffer, dtype=np.uint8)
     return cv2.imdecode(bytes_as_np_array, flags)
+
 
 # The callback for when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):
@@ -84,7 +87,7 @@ def on_message(client, userdata, msg):
                     "begin_timestamp": motion_timestamp_begin,
                     "end_timestamp": motion_timestamp_end
                 }
-                client.publish("dickeycloud/birdhouse/motion/v1/1", json.dumps(motion))
+                client.publish("lego/motion-detector/hamster/events/motion", json.dumps(motion))
                 motion_detected_begin = -1
 
 
